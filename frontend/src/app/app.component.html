@@ -1,0 +1,200 @@
+<div class="container">
+  <header>
+    <h1>🔍 SpecTrace</h1>
+    <p>Autonomous AI Behavior Auditor</p>
+  </header>
+
+  <div class="main-grid">
+    <!-- Task Execution Panel -->
+    <div class="card">
+      <h2>Execute Agent Task</h2>
+      <div class="form-group">
+        <label>Task Description</label>
+        <textarea 
+          [(ngModel)]="taskDescription" 
+          placeholder="Enter task for AI agent to execute... (e.g., 'Research the latest AI safety papers and summarize key findings')"
+          rows="4"
+        ></textarea>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Agent Type</label>
+          <select [(ngModel)]="agentType">
+            <option value="gpt-4">GPT-4</option>
+            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+            <option value="claude-3">Claude 3</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Max Steps</label>
+          <input type="number" [(ngModel)]="maxSteps" min="1" max="50">
+        </div>
+      </div>
+      
+      <button 
+        (click)="executeTask()" 
+        [disabled]="isExecuting"
+        class="btn-primary"
+      >
+        {{ isExecuting ? '⏳ Executing...' : '🚀 Execute & Audit' }}
+      </button>
+    </div>
+
+    <!-- Drift Analysis -->
+    <div class="card" *ngIf="driftAnalysis">
+      <h2>Behavioral Drift Analysis</h2>
+      <div class="drift-stats">
+        <div class="stat">
+          <span class="stat-label">Drift Score</span>
+          <span class="stat-value">{{ driftAnalysis.drift_score?.toFixed(3) || '0.000' }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Trend</span>
+          <span class="stat-value trend" [ngClass]="driftAnalysis.trend">
+            {{ driftAnalysis.trend }}
+          </span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Avg Risk</span>
+          <span class="stat-value">{{ driftAnalysis.average_risk?.toFixed(2) || '0.00' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Execution History -->
+  <div class="card">
+    <h2>Execution History</h2>
+    <div class="table-container" *ngIf="executions.length > 0; else noData">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Task</th>
+            <th>Risk Score</th>
+            <th>Deception</th>
+            <th>Violations</th>
+            <th>Status</th>
+            <th>Time</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let exec of executions">
+            <td>{{ exec.id }}</td>
+            <td class="task-cell">{{ exec.task_description }}</td>
+            <td>
+              <span 
+                class="risk-badge" 
+                [style.background-color]="getRiskColor(exec.risk_score)"
+              >
+                {{ exec.risk_score.toFixed(2) }}
+              </span>
+            </td>
+            <td>{{ (exec.deception_probability * 100).toFixed(1) }}%</td>
+            <td>
+              <span class="violation-count" *ngIf="exec.spec_violations?.length > 0">
+                {{ exec.spec_violations.length }}
+              </span>
+              <span *ngIf="!exec.spec_violations?.length">-</span>
+            </td>
+            <td>
+              <span class="status-badge" [ngClass]="exec.status">
+                {{ exec.status }}
+              </span>
+            </td>
+            <td>{{ exec.created_at | date:'short' }}</td>
+            <td>
+              <button (click)="viewExecution(exec.id)" class="btn-small">
+                View
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noData>
+      <div class="no-data">
+        <p>No executions yet. Execute a task to see results here.</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Execution Details Modal -->
+  <div class="modal" *ngIf="selectedExecution" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Execution Details #{{ selectedExecution.id }}</h2>
+        <button class="close-btn" (click)="closeModal()">×</button>
+      </div>
+      
+      <div class="detail-section">
+        <h3>Task</h3>
+        <p class="task-description">{{ selectedExecution.task_description }}</p>
+      </div>
+      
+      <div class="detail-section">
+        <h3>Risk Assessment</h3>
+        <div class="risk-grid">
+          <div class="risk-item">
+            <span class="label">Risk Score:</span>
+            <span 
+              class="value" 
+              [style.color]="getRiskColor(selectedExecution.risk_score)"
+            >
+              {{ selectedExecution.risk_score.toFixed(2) }} ({{ getRiskLabel(selectedExecution.risk_score) }})
+            </span>
+          </div>
+          <div class="risk-item">
+            <span class="label">Deception Probability:</span>
+            <span class="value">{{ (selectedExecution.deception_probability * 100).toFixed(1) }}%</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="detail-section" *ngIf="selectedExecution.spec_violations?.length > 0">
+        <h3>Spec Violations ({{ selectedExecution.spec_violations.length }})</h3>
+        <div class="violation" *ngFor="let v of selectedExecution.spec_violations">
+          <span class="severity" [ngClass]="v.severity">{{ v.severity }}</span>
+          <div class="violation-content">
+            <strong>{{ v.rule_name }}</strong>
+            <p>{{ v.description }}</p>
+            <small>Step {{ v.step }}</small>
+          </div>
+        </div>
+      </div>
+      
+      <div class="detail-section">
+        <h3>Execution Trace ({{ selectedExecution.execution_trace?.length }} steps)</h3>
+        <div class="trace" *ngFor="let trace of selectedExecution.execution_trace">
+          <div class="trace-header">
+            <span class="trace-step">Step {{ trace.step }}</span>
+            <span class="trace-time">{{ trace.timestamp | date:'medium' }}</span>
+          </div>
+          <div class="trace-content">
+            <div *ngIf="trace.thought">
+              <strong>💭 Thought:</strong>
+              <p>{{ trace.thought }}</p>
+            </div>
+            <div *ngIf="trace.action">
+              <strong>⚡ Action:</strong>
+              <p>{{ trace.action }}</p>
+            </div>
+            <div *ngIf="trace.observation">
+              <strong>👁️ Observation:</strong>
+              <p>{{ trace.observation }}</p>
+            </div>
+            <div *ngIf="trace.error" class="error">
+              <strong>❌ Error:</strong>
+              <p>{{ trace.error }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <button (click)="closeModal()" class="btn-primary">Close</button>
+    </div>
+  </div>
+</div>
