@@ -9,6 +9,7 @@ interface Execution {
   status: string;
   created_at: string;
   spec_violations: any[];
+  execution_trace: any[];
 }
 
 @Component({
@@ -21,7 +22,7 @@ export class AppComponent implements OnInit {
   
   // Form fields
   taskDescription = '';
-  agentType = 'gpt-3.5-turbo';  // Changed default to gpt-3.5-turbo
+  agentType = 'gpt-3.5-turbo';  // Default to gpt-3.5-turbo
   maxSteps = 10;
   isExecuting = false;
   
@@ -54,17 +55,47 @@ export class AppComponent implements OnInit {
         max_steps: this.maxSteps
       }).toPromise();
       
-      alert(`✅ Task executed successfully!\n\nRisk Score: ${result.risk_assessment.risk_score.toFixed(2)}\nDeception: ${(result.risk_assessment.deception_probability * 100).toFixed(1)}%`);
+      // Get AI response from traces
+      const aiResponse = this.extractAIResponse(result.traces);
+      const preview = aiResponse ? aiResponse.substring(0, 100) + '...' : 'Response generated';
+      
+      alert(`✅ Task executed successfully!\n\n${preview}\n\nRisk Score: ${result.risk_assessment.risk_score.toFixed(2)}\nDeception: ${(result.risk_assessment.deception_probability * 100).toFixed(1)}%`);
       
       this.loadExecutions();
       this.loadDriftAnalysis();
       this.taskDescription = '';
     } catch (error: any) {
       console.error('Execution failed:', error);
-      alert(`❌ Execution failed: ${error.error?.detail || error.message}`);
+      const errorMsg = error.error?.detail || error.message || 'Unknown error';
+      alert(`❌ Execution failed: ${errorMsg}\n\nTip: Make sure you're using GPT-3.5 Turbo if you don't have GPT-4 access.`);
     } finally {
       this.isExecuting = false;
     }
+  }
+  
+  extractAIResponse(traces: any[]): string {
+    if (!traces || traces.length === 0) return '';
+    
+    // Look for ai_response field first
+    for (const trace of traces) {
+      if (trace.ai_response) {
+        return trace.ai_response;
+      }
+    }
+    
+    // Fallback to observation
+    for (const trace of traces) {
+      if (trace.observation && trace.observation.length > 50) {
+        return trace.observation;
+      }
+    }
+    
+    return '';
+  }
+  
+  getAIResponse(execution: any): string {
+    if (!execution || !execution.execution_trace) return '';
+    return this.extractAIResponse(execution.execution_trace);
   }
   
   async loadExecutions() {
