@@ -458,6 +458,20 @@ header p {
   font-weight: 600;
 }
 
+/* AI Response Box - ChatGPT Style */
+.ai-response-box {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
+  border-radius: 12px;
+  line-height: 1.8;
+  color: #1f2937;
+  border: 2px solid #667eea;
+  font-size: 1rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
 .task-box {
   padding: 1rem;
   background: #f9fafb;
