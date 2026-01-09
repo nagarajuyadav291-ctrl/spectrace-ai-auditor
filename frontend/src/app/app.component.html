@@ -95,10 +95,10 @@
             </td>
             <td>{{ (exec.deception_probability * 100).toFixed(1) }}%</td>
             <td>
-              <span class="violation-count" *ngIf="exec.spec_violations?.length > 0">
+              <span class="violation-count" *ngIf="exec.spec_violations && exec.spec_violations.length > 0">
                 {{ exec.spec_violations.length }}
               </span>
-              <span *ngIf="!exec.spec_violations?.length">-</span>
+              <span *ngIf="!exec.spec_violations || exec.spec_violations.length === 0">-</span>
             </td>
             <td>
               <span class="status-badge" [ngClass]="exec.status">
@@ -154,7 +154,7 @@
         </div>
       </div>
       
-      <div class="detail-section" *ngIf="selectedExecution.spec_violations?.length > 0">
+      <div class="detail-section" *ngIf="selectedExecution.spec_violations && selectedExecution.spec_violations.length > 0">
         <h3>Spec Violations ({{ selectedExecution.spec_violations.length }})</h3>
         <div class="violation" *ngFor="let v of selectedExecution.spec_violations">
           <span class="severity" [ngClass]="v.severity">{{ v.severity }}</span>
@@ -166,8 +166,8 @@
         </div>
       </div>
       
-      <div class="detail-section">
-        <h3>Execution Trace ({{ selectedExecution.execution_trace?.length }} steps)</h3>
+      <div class="detail-section" *ngIf="selectedExecution.execution_trace">
+        <h3>Execution Trace ({{ selectedExecution.execution_trace.length }} steps)</h3>
         <div class="trace" *ngFor="let trace of selectedExecution.execution_trace">
           <div class="trace-header">
             <span class="trace-step">Step {{ trace.step }}</span>
