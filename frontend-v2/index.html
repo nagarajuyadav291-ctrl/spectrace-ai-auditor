@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpecTrace - AI Safety Monitor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h1>🔍 SpecTrace</h1>
+      <button class="new-chat-btn" onclick="newChat()">
+        <span>+</span> New Chat
+      </button>
+    </div>
+    
+    <div class="chat-history" id="chatHistory">
+      <!-- Chat history items will be inserted here -->
+    </div>
+    
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar">👤</div>
+        <span>User</span>
+      </div>
+      <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
+    </div>
+  </div>
+  
+  <!-- Main Chat Area -->
+  <div class="main-content">
+    <!-- Header -->
+    <div class="chat-header">
+      <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+      
+      <div class="model-selector">
+        <select id="modelSelect" onchange="updateModel()">
+          <optgroup label="🆓 Free Models">
+            <option value="llama-3.1-70b-versatile" selected>Llama 3.1 70B ⭐</option>
+            <option value="llama-3.1-8b-instant">Llama 3.1 8B (Instant)</option>
+            <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+            <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+            <option value="command-r">Cohere Command R</option>
+            <option value="mistral-small">Mistral Small</option>
+          </optgroup>
+          <optgroup label="💰 Paid Models">
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+            <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+            <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+          </optgroup>
+        </select>
+      </div>
+      
+      <div class="header-actions">
+        <button class="icon-btn" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌙</button>
+        <button class="icon-btn" onclick="toggleSafetyPanel()" title="Safety Panel">🛡️</button>
+      </div>
+    </div>
+    
+    <!-- Chat Messages -->
+    <div class="chat-container" id="chatContainer">
+      <!-- Welcome Screen -->
+      <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-content">
+          <h1>🔍 SpecTrace</h1>
+          <p class="tagline">AI Safety Monitor with Real-Time Risk Analysis</p>
+          
+          <div class="features-grid">
+            <div class="feature-card">
+              <div class="feature-icon">🛡️</div>
+              <h3>Multi-Engine Safety</h3>
+              <p>3+ independent detection systems</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">📊</div>
+              <h3>Risk Scoring</h3>
+              <p>Transparent, explainable metrics</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🔍</div>
+              <h3>Deception Detection</h3>
+              <p>Behavioral pattern analysis</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">✅</div>
+              <h3>Compliance Check</h3>
+              <p>Regulatory violation alerts</p>
+            </div>
+          </div>
+          
+          <div class="example-prompts">
+            <p class="example-label">Try asking:</p>
+            <button class="example-btn" onclick="setPrompt('What is artificial intelligence?')">
+              What is artificial intelligence?
+            </button>
+            <button class="example-btn" onclick="setPrompt('Explain quantum computing in simple terms')">
+              Explain quantum computing
+            </button>
+            <button class="example-btn" onclick="setPrompt('What are the risks of AI?')">
+              What are the risks of AI?
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Messages will be inserted here -->
+    </div>
+    
+    <!-- Safety Panel (Collapsible) -->
+    <div class="safety-panel" id="safetyPanel">
+      <div class="safety-header">
+        <h3>🛡️ Safety Analysis</h3>
+        <button class="close-btn" onclick="toggleSafetyPanel()">×</button>
+      </div>
+      
+      <div class="safety-content" id="safetyContent">
+        <p class="safety-placeholder">Send a message to see safety analysis</p>
+      </div>
+    </div>
+    
+    <!-- Input Area -->
+    <div class="input-container">
+      <div class="input-wrapper">
+        <textarea 
+          id="messageInput" 
+          placeholder="Send a message..." 
+          rows="1"
+          onkeydown="handleKeyPress(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+      <p class="input-hint">SpecTrace monitors AI behavior in real-time</p>
+    </div>
+  </div>
+  
+  <!-- Settings Modal -->
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>⚙️ Settings</h2>
+        <button class="close-btn" onclick="toggleSettings()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-group">
+          <label>Theme</label>
+          <select id="themeSelect" onchange="changeTheme()">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+            <option value="auto">Auto</option>
+          </select>
+        </div>
+        
+        <div class="setting-group">
+          <label>Safety Sensitivity</label>
+          <select id="sensitivitySelect">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+        
+        <div class="setting-group">
+          <label>Show Risk Scores</label>
+          <input type="checkbox" id="showRiskScores" checked>
+        </div>
+        
+        <div class="setting-group">
+          <label>Auto-expand Safety Panel</label>
+          <input type="checkbox" id="autoExpandSafety">
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="app.js"></script>
+</body>
+</html>
