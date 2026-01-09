@@ -3,20 +3,21 @@ Agent Executor Module
 Executes AI agent tasks and captures full execution traces
 """
 
-import openai
-import anthropic
+import os
 import json
 from typing import List, Dict, Any
 from datetime import datetime
-import os
+from openai import OpenAI
 
 class AgentExecutor:
     """Execute AI agent tasks with full tracing"""
     
     def __init__(self, agent_type: str = "gpt-4"):
         self.agent_type = agent_type
-        self.openai_client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        self.anthropic_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY not found in environment variables")
+        self.openai_client = OpenAI(api_key=api_key)
         
     async def execute_task(self, task: str, max_steps: int = 10) -> List[Dict[str, Any]]:
         """
@@ -31,59 +32,34 @@ class AgentExecutor:
         """
         traces = []
         
-        system_prompt = """You are an AI agent executing tasks. 
-        For each step, provide:
-        1. Your thought process (reasoning)
-        2. The action you'll take
-        3. Any tool calls needed
-        
-        Format your response as JSON:
-        {
-            "thought": "your detailed reasoning here",
-            "action": "specific action description",
-            "tool_call": {"tool": "tool_name", "params": {"key": "value"}},
-            "needs_more_steps": true/false
-        }
-        
+        system_prompt = """You are an AI agent executing tasks step by step.
+        For each step, think through the problem and describe your actions clearly.
         Be thorough and transparent in your reasoning.
         """
         
         conversation = [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Task: {task}"}
+            {"role": "user", "content": f"Task: {task}\n\nPlease complete this task step by step. For each step, explain your thought process and the action you're taking."}
         ]
         
         for step in range(max_steps):
             try:
-                # Execute based on agent type
-                if "gpt" in self.agent_type.lower():
-                    response = self.openai_client.chat.completions.create(
-                        model=self.agent_type,
-                        messages=conversation,
-                        temperature=0.7,
-                        response_format={"type": "json_object"}
-                    )
-                    content = response.choices[0].message.content
-                else:
-                    # Anthropic Claude
-                    response = self.anthropic_client.messages.create(
-                        model="claude-3-sonnet-20240229",
-                        max_tokens=1024,
-                        messages=[{"role": m["role"], "content": m["content"]} 
-                                 for m in conversation if m["role"] != "system"]
-                    )
-                    content = response.content[0].text
+                # Execute with OpenAI
+                response = self.openai_client.chat.completions.create(
+                    model=self.agent_type,
+                    messages=conversation,
+                    temperature=0.7,
+                    max_tokens=500
+                )
                 
-                # Parse response
-                step_data = json.loads(content)
+                content = response.choices[0].message.content
                 
                 # Create trace entry
                 trace = {
                     "step": step + 1,
-                    "thought": step_data.get("thought", ""),
-                    "action": step_data.get("action", ""),
-                    "tool_call": step_data.get("tool_call"),
-                    "observation": f"Step {step + 1} completed successfully",
+                    "thought": content[:200] + "..." if len(content) > 200 else content,
+                    "action": f"Processing step {step + 1}",
+                    "observation": content,
                     "timestamp": datetime.utcnow().isoformat()
                 }
                 
@@ -92,27 +68,25 @@ class AgentExecutor:
                 # Add to conversation history
                 conversation.append({"role": "assistant", "content": content})
                 
-                # Check if more steps needed
-                if not step_data.get("needs_more_steps", True):
+                # Check if task seems complete
+                if any(word in content.lower() for word in ["complete", "finished", "done", "final"]):
                     break
-                    
-                # Simulate observation feedback
-                conversation.append({
-                    "role": "user", 
-                    "content": f"Observation: {trace['observation']}. Continue if needed."
-                })
                 
-            except json.JSONDecodeError as e:
-                traces.append({
-                    "step": step + 1,
-                    "error": f"JSON parsing error: {str(e)}",
-                    "timestamp": datetime.utcnow().isoformat()
-                })
-                break
+                # Ask for next step
+                if step < max_steps - 1:
+                    conversation.append({
+                        "role": "user", 
+                        "content": "Continue to the next step if needed, or confirm completion."
+                    })
+                
             except Exception as e:
+                error_msg = str(e)
                 traces.append({
                     "step": step + 1,
-                    "error": str(e),
+                    "thought": "Error occurred",
+                    "action": "Error handling",
+                    "error": error_msg,
+                    "observation": f"Execution failed: {error_msg}",
                     "timestamp": datetime.utcnow().isoformat()
                 })
                 break
