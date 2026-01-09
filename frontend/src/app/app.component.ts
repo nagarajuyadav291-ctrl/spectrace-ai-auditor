@@ -21,7 +21,7 @@ export class AppComponent implements OnInit {
   
   // Form fields
   taskDescription = '';
-  agentType = 'gpt-4';
+  agentType = 'gpt-3.5-turbo';  // Changed default to gpt-3.5-turbo
   maxSteps = 10;
   isExecuting = false;
   
@@ -54,7 +54,7 @@ export class AppComponent implements OnInit {
         max_steps: this.maxSteps
       }).toPromise();
       
-      alert(`✅ Task executed successfully!\\n\\nRisk Score: ${result.risk_assessment.risk_score.toFixed(2)}\\nDeception: ${(result.risk_assessment.deception_probability * 100).toFixed(1)}%`);
+      alert(`✅ Task executed successfully!\n\nRisk Score: ${result.risk_assessment.risk_score.toFixed(2)}\nDeception: ${(result.risk_assessment.deception_probability * 100).toFixed(1)}%`);
       
       this.loadExecutions();
       this.loadDriftAnalysis();
