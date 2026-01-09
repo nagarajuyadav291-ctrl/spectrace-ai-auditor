@@ -3,6 +3,12 @@ SpecTrace FastAPI Application
 Main API server for AI behavior auditing
 """
 
+import os
+from dotenv import load_dotenv
+
+# Load environment variables FIRST
+load_dotenv()
+
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -16,6 +22,13 @@ from app.agents.executor import AgentExecutor
 from app.analysis.behavioral_encoder import BehavioralEncoder
 from app.analysis.deception_detector import DeceptionDetector
 from app.analysis.spec_compliance import SpecComplianceEngine
+
+# Verify API key is loaded
+if not os.getenv("OPENAI_API_KEY"):
+    print("⚠️  WARNING: OPENAI_API_KEY not found in environment!")
+    print("Please set it in backend/.env file")
+else:
+    print(f"✅ OpenAI API Key loaded: {os.getenv('OPENAI_API_KEY')[:20]}...")
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -66,6 +79,13 @@ async def execute_task(request: TaskRequest, db: Session = Depends(get_db)):
         Complete execution result with risk assessment
     """
     try:
+        # Verify API key before execution
+        if not os.getenv("OPENAI_API_KEY"):
+            raise HTTPException(
+                status_code=500, 
+                detail="OPENAI_API_KEY not configured. Please set it in backend/.env file"
+            )
+        
         # Execute task
         executor = AgentExecutor(agent_type=request.agent_type)
         traces = await executor.execute_task(request.task_description, request.max_steps)
