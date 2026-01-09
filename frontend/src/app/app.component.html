@@ -22,9 +22,9 @@
         <div class="form-group">
           <label>Model</label>
           <select [(ngModel)]="agentType" class="modern-select">
-            <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Recommended)</option>
-            <option value="gpt-4">GPT-4</option>
-            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+            <option value="gpt-3.5-turbo">GPT-3.5 Turbo ⭐ (Recommended)</option>
+            <option value="gpt-4">GPT-4 (Requires Access)</option>
+            <option value="gpt-4-turbo">GPT-4 Turbo (Requires Access)</option>
           </select>
         </div>
         
@@ -101,7 +101,7 @@
         </div>
         
         <div class="execution-task">
-          {{ exec.task_description }}
+          <strong>Q:</strong> {{ exec.task_description }}
         </div>
         
         <div class="execution-metrics">
@@ -151,6 +151,14 @@
       </div>
       
       <div class="modal-body">
+        <!-- AI Response Section (Prominent) -->
+        <div class="detail-section" *ngIf="getAIResponse(selectedExecution)">
+          <h3>🤖 AI Response</h3>
+          <div class="ai-response-box">
+            {{ getAIResponse(selectedExecution) }}
+          </div>
+        </div>
+
         <div class="detail-section">
           <h3>📝 Task</h3>
           <div class="task-box">{{ selectedExecution.task_description }}</div>
@@ -212,6 +220,13 @@
                   <div>
                     <strong>Observation</strong>
                     <p>{{ trace.observation }}</p>
+                  </div>
+                </div>
+                <div class="trace-field" *ngIf="trace.model">
+                  <span class="trace-icon">🔧</span>
+                  <div>
+                    <strong>Model</strong>
+                    <p>{{ trace.model }}</p>
                   </div>
                 </div>
                 <div class="trace-field error" *ngIf="trace.error">
