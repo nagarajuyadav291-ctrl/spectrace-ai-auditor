@@ -2,15 +2,15 @@
 # This script cleans old files and runs everything fresh!
 
 Write-Host ""
-Write-Host "╔════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║                                                            ║" -ForegroundColor Cyan
-Write-Host "║         🧹 SPECTRACE CLEAN SETUP & RUN 🧹                  ║" -ForegroundColor Cyan
-Write-Host "║                                                            ║" -ForegroundColor Cyan
-Write-Host "╚════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host "================================================================" -ForegroundColor Cyan
+Write-Host "                                                                " -ForegroundColor Cyan
+Write-Host "         SPECTRACE CLEAN SETUP & RUN                            " -ForegroundColor Cyan
+Write-Host "                                                                " -ForegroundColor Cyan
+Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Step 1: Stop any running servers
-Write-Host "🛑 Step 1: Stopping any running servers..." -ForegroundColor Yellow
+Write-Host "Step 1: Stopping any running servers..." -ForegroundColor Yellow
 Write-Host ""
 
 # Kill processes on ports 3000 and 8000
@@ -19,20 +19,20 @@ foreach ($port in $ports) {
     $process = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique
     if ($process) {
         Stop-Process -Id $process -Force -ErrorAction SilentlyContinue
-        Write-Host "✅ Stopped process on port $port" -ForegroundColor Green
+        Write-Host "Stopped process on port $port" -ForegroundColor Green
     }
 }
 
 Write-Host ""
 
 # Step 2: Clean old/unnecessary files
-Write-Host "🧹 Step 2: Cleaning old files..." -ForegroundColor Yellow
+Write-Host "Step 2: Cleaning old files..." -ForegroundColor Yellow
 Write-Host ""
 
 # Remove old frontend (Angular - not needed)
 if (Test-Path "frontend") {
     Remove-Item -Path "frontend" -Recurse -Force
-    Write-Host "✅ Removed old Angular frontend" -ForegroundColor Green
+    Write-Host "Removed old Angular frontend" -ForegroundColor Green
 }
 
 # Remove unnecessary documentation files
@@ -53,22 +53,22 @@ $docsToRemove = @(
 foreach ($doc in $docsToRemove) {
     if (Test-Path $doc) {
         Remove-Item -Path $doc -Force
-        Write-Host "✅ Removed $doc" -ForegroundColor Green
+        Write-Host "Removed $doc" -ForegroundColor Green
     }
 }
 
 # Remove Docker files (not needed for local dev)
 if (Test-Path "docker-compose.yml") {
     Remove-Item -Path "docker-compose.yml" -Force
-    Write-Host "✅ Removed docker-compose.yml" -ForegroundColor Green
+    Write-Host "Removed docker-compose.yml" -ForegroundColor Green
 }
 
 Write-Host ""
-Write-Host "✅ Cleanup complete!" -ForegroundColor Green
+Write-Host "Cleanup complete!" -ForegroundColor Green
 Write-Host ""
 
 # Step 3: Setup .env file
-Write-Host "📝 Step 3: Setting up .env file..." -ForegroundColor Yellow
+Write-Host "Step 3: Setting up .env file..." -ForegroundColor Yellow
 Write-Host ""
 
 $envPath = "backend\.env"
@@ -110,11 +110,11 @@ ANTHROPIC_API_KEY=your_anthropic_key_here
 "@
 
 Set-Content -Path $envPath -Value $envContent
-Write-Host "✅ .env file created!" -ForegroundColor Green
+Write-Host ".env file created!" -ForegroundColor Green
 Write-Host ""
 
 # Step 4: Install Python packages
-Write-Host "📦 Step 4: Installing Python packages..." -ForegroundColor Yellow
+Write-Host "Step 4: Installing Python packages..." -ForegroundColor Yellow
 Write-Host ""
 
 cd backend
@@ -122,12 +122,12 @@ cd backend
 # Activate virtual environment
 if (Test-Path "venv\Scripts\Activate.ps1") {
     .\venv\Scripts\Activate.ps1
-    Write-Host "✅ Virtual environment activated" -ForegroundColor Green
+    Write-Host "Virtual environment activated" -ForegroundColor Green
 } else {
-    Write-Host "⚠️  Creating virtual environment..." -ForegroundColor Yellow
+    Write-Host "Creating virtual environment..." -ForegroundColor Yellow
     python -m venv venv
     .\venv\Scripts\Activate.ps1
-    Write-Host "✅ Virtual environment created!" -ForegroundColor Green
+    Write-Host "Virtual environment created!" -ForegroundColor Green
 }
 
 Write-Host ""
@@ -139,44 +139,44 @@ pip install --quiet fastapi uvicorn sqlalchemy python-dotenv
 pip install --quiet google-generativeai cohere anthropic openai
 pip install --quiet httpx requests
 
-Write-Host "✅ All packages installed!" -ForegroundColor Green
+Write-Host "All packages installed!" -ForegroundColor Green
 Write-Host ""
 
 cd ..
 
 # Step 5: Show API key instructions
-Write-Host "╔════════════════════════════════════════════════════════════╗" -ForegroundColor Magenta
-Write-Host "║                                                            ║" -ForegroundColor Magenta
-Write-Host "║              🔑 GET YOUR FREE API KEYS 🔑                  ║" -ForegroundColor Magenta
-Write-Host "║                                                            ║" -ForegroundColor Magenta
-Write-Host "╚════════════════════════════════════════════════════════════╝" -ForegroundColor Magenta
+Write-Host "================================================================" -ForegroundColor Magenta
+Write-Host "                                                                " -ForegroundColor Magenta
+Write-Host "              GET YOUR FREE API KEYS                            " -ForegroundColor Magenta
+Write-Host "                                                                " -ForegroundColor Magenta
+Write-Host "================================================================" -ForegroundColor Magenta
 Write-Host ""
 
-Write-Host "Get at least GROQ (fastest, completely FREE):" -ForegroundColor White
+Write-Host "Get at least GROQ (fastest and completely FREE):" -ForegroundColor White
 Write-Host ""
 
-Write-Host "1️⃣  GROQ (Recommended - Fastest!)" -ForegroundColor Cyan
-Write-Host "   → https://console.groq.com" -ForegroundColor White
-Write-Host "   → Sign up → API Keys → Create → Copy key" -ForegroundColor Gray
+Write-Host "1. GROQ (Recommended - Fastest!)" -ForegroundColor Cyan
+Write-Host "   https://console.groq.com" -ForegroundColor White
+Write-Host "   Sign up -> API Keys -> Create -> Copy key" -ForegroundColor Gray
 Write-Host ""
 
-Write-Host "2️⃣  GOOGLE GEMINI (Optional)" -ForegroundColor Cyan
-Write-Host "   → https://aistudio.google.com/app/apikey" -ForegroundColor White
+Write-Host "2. GOOGLE GEMINI (Optional)" -ForegroundColor Cyan
+Write-Host "   https://aistudio.google.com/app/apikey" -ForegroundColor White
 Write-Host ""
 
-Write-Host "3️⃣  COHERE (Optional)" -ForegroundColor Cyan
-Write-Host "   → https://dashboard.cohere.com/api-keys" -ForegroundColor White
+Write-Host "3. COHERE (Optional)" -ForegroundColor Cyan
+Write-Host "   https://dashboard.cohere.com/api-keys" -ForegroundColor White
 Write-Host ""
 
-Write-Host "📖 Full guide: FREE_API_KEYS.md" -ForegroundColor Yellow
+Write-Host "Full guide: FREE_API_KEYS.md" -ForegroundColor Yellow
 Write-Host ""
 
 # Step 6: Ask if user has API keys
-Write-Host "╔════════════════════════════════════════════════════════════╗" -ForegroundColor Yellow
-Write-Host "║                                                            ║" -ForegroundColor Yellow
-Write-Host "║              ⚠️  IMPORTANT: API KEYS NEEDED ⚠️              ║" -ForegroundColor Yellow
-Write-Host "║                                                            ║" -ForegroundColor Yellow
-Write-Host "╚════════════════════════════════════════════════════════════╝" -ForegroundColor Yellow
+Write-Host "================================================================" -ForegroundColor Yellow
+Write-Host "                                                                " -ForegroundColor Yellow
+Write-Host "              IMPORTANT: API KEYS NEEDED                        " -ForegroundColor Yellow
+Write-Host "                                                                " -ForegroundColor Yellow
+Write-Host "================================================================" -ForegroundColor Yellow
 Write-Host ""
 
 $hasKeys = Read-Host "Do you have API keys ready? (y/n)"
@@ -193,59 +193,59 @@ if ($hasKeys -eq "y" -or $hasKeys -eq "Y") {
     
     # Step 7: Start servers
     Write-Host ""
-    Write-Host "╔════════════════════════════════════════════════════════════╗" -ForegroundColor Green
-    Write-Host "║                                                            ║" -ForegroundColor Green
-    Write-Host "║                  🚀 STARTING SERVERS 🚀                    ║" -ForegroundColor Green
-    Write-Host "║                                                            ║" -ForegroundColor Green
-    Write-Host "╚════════════════════════════════════════════════════════════╝" -ForegroundColor Green
+    Write-Host "================================================================" -ForegroundColor Green
+    Write-Host "                                                                " -ForegroundColor Green
+    Write-Host "                  STARTING SERVERS                              " -ForegroundColor Green
+    Write-Host "                                                                " -ForegroundColor Green
+    Write-Host "================================================================" -ForegroundColor Green
     Write-Host ""
     
     # Start backend in new window
-    Write-Host "🔧 Starting backend server..." -ForegroundColor Cyan
+    Write-Host "Starting backend server..." -ForegroundColor Cyan
     Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PWD\backend'; .\venv\Scripts\Activate.ps1; uvicorn app.main:app --reload --port 8000"
     
     Start-Sleep -Seconds 3
     
     # Start frontend in new window
-    Write-Host "🎨 Starting frontend server..." -ForegroundColor Cyan
+    Write-Host "Starting frontend server..." -ForegroundColor Cyan
     Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PWD\frontend-v2'; python -m http.server 3000"
     
     Start-Sleep -Seconds 2
     
     # Open browser
-    Write-Host "🌐 Opening browser..." -ForegroundColor Cyan
+    Write-Host "Opening browser..." -ForegroundColor Cyan
     Start-Sleep -Seconds 3
     Start-Process "http://localhost:3000"
     
     Write-Host ""
-    Write-Host "╔════════════════════════════════════════════════════════════╗" -ForegroundColor Green
-    Write-Host "║                                                            ║" -ForegroundColor Green
-    Write-Host "║                  ✅ ALL DONE! ✅                            ║" -ForegroundColor Green
-    Write-Host "║                                                            ║" -ForegroundColor Green
-    Write-Host "╚════════════════════════════════════════════════════════════╝" -ForegroundColor Green
+    Write-Host "================================================================" -ForegroundColor Green
+    Write-Host "                                                                " -ForegroundColor Green
+    Write-Host "                  ALL DONE!                                     " -ForegroundColor Green
+    Write-Host "                                                                " -ForegroundColor Green
+    Write-Host "================================================================" -ForegroundColor Green
     Write-Host ""
     
-    Write-Host "🎉 SpecTrace is now running!" -ForegroundColor Green
+    Write-Host "SpecTrace is now running!" -ForegroundColor Green
     Write-Host ""
-    Write-Host "📍 Frontend: http://localhost:3000" -ForegroundColor Cyan
-    Write-Host "📍 Backend:  http://localhost:8000" -ForegroundColor Cyan
+    Write-Host "Frontend: http://localhost:3000" -ForegroundColor Cyan
+    Write-Host "Backend:  http://localhost:8000" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "💡 Look for the purple gradient UI with sidebar!" -ForegroundColor Yellow
+    Write-Host "Look for the purple gradient UI with sidebar!" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "To stop servers: Close the PowerShell windows" -ForegroundColor Gray
     Write-Host ""
     
 } else {
     Write-Host ""
-    Write-Host "╔════════════════════════════════════════════════════════════╗" -ForegroundColor Yellow
-    Write-Host "║                                                            ║" -ForegroundColor Yellow
-    Write-Host "║              📋 NEXT STEPS 📋                              ║" -ForegroundColor Yellow
-    Write-Host "║                                                            ║" -ForegroundColor Yellow
-    Write-Host "╚════════════════════════════════════════════════════════════╝" -ForegroundColor Yellow
+    Write-Host "================================================================" -ForegroundColor Yellow
+    Write-Host "                                                                " -ForegroundColor Yellow
+    Write-Host "              NEXT STEPS                                        " -ForegroundColor Yellow
+    Write-Host "                                                                " -ForegroundColor Yellow
+    Write-Host "================================================================" -ForegroundColor Yellow
     Write-Host ""
     
-    Write-Host "1. Get FREE API keys (10 minutes):" -ForegroundColor White
-    Write-Host "   → https://console.groq.com" -ForegroundColor Cyan
+    Write-Host "1. Get FREE API keys:" -ForegroundColor White
+    Write-Host "   https://console.groq.com" -ForegroundColor Cyan
     Write-Host ""
     
     Write-Host "2. Add keys to .env file:" -ForegroundColor White
