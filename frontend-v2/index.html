@@ -1,326 +1,929 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SpecTrace - AI Safety Monitor</title>
-  
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  
+  <title>SpecTrace AI</title>
   <style>
-    * { font-family: 'Inter', sans-serif; }
-    
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: #1a1a1a; }
-    ::-webkit-scrollbar-thumb { background: #404040; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #505050; }
-    
-    /* Gradient Text */
-    .gradient-text {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     }
-    
-    /* Glassmorphism */
-    .glass {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+
+    body {
+      background: #212121;
+      color: #ececec;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
     }
-    
-    /* Animated Gradient Border */
-    .gradient-border {
-      position: relative;
-      background: #1a1a1a;
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: #171717;
+      border-right: 1px solid #2f2f2f;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid #2f2f2f;
+    }
+
+    .new-chat-btn {
+      width: 100%;
+      background: #2f2f2f;
+      border: none;
+      color: #ececec;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .new-chat-btn:hover {
+      background: #3f3f3f;
+    }
+
+    .chat-history {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .history-item {
+      padding: 12px;
+      margin-bottom: 4px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #b4b4b4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item:hover {
+      background: #2f2f2f;
+    }
+
+    .sidebar-footer {
+      padding: 16px;
+      border-top: 1px solid #2f2f2f;
+    }
+
+    .plan-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px solid #3f3f3f;
+      color: #ececec;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .plan-btn:hover {
+      background: #2f2f2f;
+    }
+
+    /* Main Area */
+    .main-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-bottom: 1px solid #2f2f2f;
+      background: #171717;
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .model-select {
+      background: #2f2f2f;
+      border: 1px solid #3f3f3f;
+      color: #ececec;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .icon-btn {
+      background: #2f2f2f;
+      border: none;
+      color: #ececec;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .icon-btn:hover {
+      background: #3f3f3f;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .messages-container {
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Welcome */
+    .welcome {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .welcome h1 {
+      font-size: 32px;
+      margin-bottom: 40px;
+      font-weight: 600;
+    }
+
+    .examples {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .example-card {
+      background: #2f2f2f;
+      border: 1px solid #3f3f3f;
+      padding: 16px;
       border-radius: 12px;
+      cursor: pointer;
+      text-align: left;
     }
-    
-    .gradient-border::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 12px;
-      padding: 2px;
-      background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      animation: rotate 3s linear infinite;
+
+    .example-card:hover {
+      background: #3f3f3f;
     }
-    
-    @keyframes rotate {
-      to { transform: rotate(360deg); }
+
+    .example-card p {
+      font-size: 14px;
+      color: #b4b4b4;
     }
-    
-    /* Pulse Animation */
+
+    /* Messages */
+    .message {
+      margin-bottom: 24px;
+      display: flex;
+      gap: 16px;
+    }
+
+    .message.user {
+      flex-direction: row-reverse;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 16px;
+    }
+
+    .user .avatar {
+      background: #5436da;
+    }
+
+    .assistant .avatar {
+      background: #10a37f;
+    }
+
+    .message-content {
+      flex: 1;
+      line-height: 1.6;
+      font-size: 15px;
+      white-space: pre-wrap;
+    }
+
+    .user .message-content {
+      text-align: right;
+    }
+
+    .loading {
+      opacity: 0.6;
+      animation: pulse 1.5s infinite;
+    }
+
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-    
-    .pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-    
-    /* Typing Animation */
-    @keyframes typing {
-      0%, 100% { opacity: 0.2; }
+      0%, 100% { opacity: 0.6; }
       50% { opacity: 1; }
     }
-    
-    .typing-dot {
-      animation: typing 1.4s infinite;
+
+    .error {
+      color: #ef4444;
+      background: #2f1f1f;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ef4444;
     }
-    
-    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    /* Input Area */
+    .input-area {
+      padding: 20px;
+      border-top: 1px solid #2f2f2f;
+      background: #171717;
+    }
+
+    .input-container {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .input-box {
+      flex: 1;
+      background: #2f2f2f;
+      border: 1px solid #3f3f3f;
+      color: #ececec;
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-size: 15px;
+      resize: none;
+      outline: none;
+      max-height: 200px;
+      min-height: 50px;
+    }
+
+    .input-box:focus {
+      border-color: #5436da;
+    }
+
+    .send-btn {
+      background: #5436da;
+      border: none;
+      color: white;
+      padding: 14px 24px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .send-btn:hover {
+      background: #6b46e5;
+    }
+
+    .send-btn:disabled {
+      background: #3f3f3f;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #2f2f2f;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-header h2 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: #ececec;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+    }
+
+    .plan-option {
+      background: #1f1f1f;
+      border: 2px solid #3f3f3f;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      cursor: pointer;
+    }
+
+    .plan-option:hover {
+      border-color: #5436da;
+    }
+
+    .plan-option.active {
+      border-color: #10a37f;
+      background: #1f2f2a;
+    }
+
+    .plan-name {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .plan-price {
+      font-size: 24px;
+      font-weight: 700;
+      color: #10a37f;
+      margin-bottom: 12px;
+    }
+
+    .plan-features {
+      list-style: none;
+      padding: 0;
+    }
+
+    .plan-features li {
+      padding: 6px 0;
+      font-size: 14px;
+      color: #b4b4b4;
+    }
+
+    .plan-features li:before {
+      content: "✓ ";
+      color: #10a37f;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    /* Safety Panel */
+    .safety-panel {
+      position: fixed;
+      top: 0;
+      right: -400px;
+      width: 400px;
+      height: 100vh;
+      background: #171717;
+      border-left: 1px solid #2f2f2f;
+      transition: right 0.3s;
+      overflow-y: auto;
+      z-index: 100;
+    }
+
+    .safety-panel.active {
+      right: 0;
+    }
+
+    .safety-header {
+      padding: 20px;
+      border-bottom: 1px solid #2f2f2f;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .safety-content {
+      padding: 20px;
+    }
+
+    .safety-metric {
+      background: #2f2f2f;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+
+    .metric-label {
+      font-size: 14px;
+      color: #b4b4b4;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .metric-bar {
+      height: 8px;
+      background: #1f1f1f;
+      border-radius: 4px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .metric-fill {
+      height: 100%;
+      background: #10a37f;
+      transition: width 0.3s;
+    }
+
+    .metric-fill.warning {
+      background: #f59e0b;
+    }
+
+    .metric-fill.danger {
+      background: #ef4444;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #171717;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #3f3f3f;
+      border-radius: 4px;
+    }
   </style>
-  
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            primary: '#667eea',
-            secondary: '#764ba2',
-          }
-        }
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <button class="new-chat-btn" onclick="newChat()">+ New Chat</button>
+    </div>
+    <div class="chat-history" id="chatHistory"></div>
+    <div class="sidebar-footer">
+      <button class="plan-btn" onclick="openPlans()">
+        <span>🆓 Free Plan</span>
+        <span>→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Area -->
+  <div class="main-area">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">SpecTrace AI</div>
+      <div class="header-right">
+        <select class="model-select" id="modelSelect">
+          <option value="llama-3.1-70b-versatile">Llama 3.1 70B</option>
+          <option value="llama-3.1-8b-instant">Llama 3.1 8B</option>
+          <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+          <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+          <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+          <option value="command-r">Command R</option>
+          <option value="command-r-plus">Command R+</option>
+          <option value="gpt-4o">GPT-4o</option>
+          <option value="gpt-4-turbo">GPT-4 Turbo</option>
+          <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+          <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+        </select>
+        <button class="icon-btn" onclick="toggleSafety()">🛡️ Safety</button>
+        <button class="icon-btn" onclick="openSettings()">⚙️</button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+      <div class="messages-container" id="messagesContainer">
+        <div class="welcome" id="welcomeScreen">
+          <h1>How can I help you today?</h1>
+          <div class="examples">
+            <div class="example-card" onclick="sendExample('Explain quantum computing in simple terms')">
+              <p>Explain quantum computing in simple terms</p>
+            </div>
+            <div class="example-card" onclick="sendExample('What is artificial intelligence?')">
+              <p>What is artificial intelligence?</p>
+            </div>
+            <div class="example-card" onclick="sendExample('How does machine learning work?')">
+              <p>How does machine learning work?</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-area">
+      <div class="input-container">
+        <textarea 
+          class="input-box" 
+          id="userInput" 
+          placeholder="Message SpecTrace AI..."
+          rows="1"
+        ></textarea>
+        <button class="send-btn" id="sendBtn">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Safety Panel -->
+  <div class="safety-panel" id="safetyPanel">
+    <div class="safety-header">
+      <h2>Safety Analysis</h2>
+      <button class="close-btn" onclick="toggleSafety()">&times;</button>
+    </div>
+    <div class="safety-content">
+      <div class="safety-metric">
+        <div class="metric-label">Overall Risk Score</div>
+        <div class="metric-value" id="riskScore">0%</div>
+        <div class="metric-bar">
+          <div class="metric-fill" id="riskBar" style="width: 0%"></div>
+        </div>
+      </div>
+      <div class="safety-metric">
+        <div class="metric-label">Deception Probability</div>
+        <div class="metric-value" id="deceptionScore">0%</div>
+        <div class="metric-bar">
+          <div class="metric-fill" id="deceptionBar" style="width: 0%"></div>
+        </div>
+      </div>
+      <div class="safety-metric">
+        <div class="metric-label">Toxicity Level</div>
+        <div class="metric-value" id="toxicityScore">0%</div>
+        <div class="metric-bar">
+          <div class="metric-fill" id="toxicityBar" style="width: 0%"></div>
+        </div>
+      </div>
+      <div class="safety-metric">
+        <div class="metric-label">Behavioral Drift</div>
+        <div class="metric-value" id="driftScore">0%</div>
+        <div class="metric-bar">
+          <div class="metric-fill" id="driftBar" style="width: 0%"></div>
+        </div>
+      </div>
+      <div class="safety-metric">
+        <div class="metric-label">Compliance Status</div>
+        <div class="metric-value" id="complianceScore">100%</div>
+        <div class="metric-bar">
+          <div class="metric-fill" id="complianceBar" style="width: 100%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plans Modal -->
+  <div class="modal" id="plansModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Choose Your Plan</h2>
+        <button class="close-btn" onclick="closePlans()">&times;</button>
+      </div>
+      <div class="plan-option active">
+        <div class="plan-name">Free Plan</div>
+        <div class="plan-price">$0/month</div>
+        <ul class="plan-features">
+          <li>Groq Models (Llama, Mixtral)</li>
+          <li>Google Gemini Flash</li>
+          <li>Cohere Command R</li>
+          <li>Basic Safety Monitoring</li>
+          <li>Unlimited Messages</li>
+        </ul>
+      </div>
+      <div class="plan-option">
+        <div class="plan-name">Pro Plan</div>
+        <div class="plan-price">$20/month</div>
+        <ul class="plan-features">
+          <li>All Free Plan Features</li>
+          <li>GPT-4o & GPT-4 Turbo</li>
+          <li>Claude 3.5 Sonnet</li>
+          <li>Advanced Safety Analysis</li>
+          <li>Priority Support</li>
+          <li>API Access</li>
+        </ul>
+      </div>
+      <div class="plan-option">
+        <div class="plan-name">Enterprise Plan</div>
+        <div class="plan-price">Custom</div>
+        <ul class="plan-features">
+          <li>All Pro Plan Features</li>
+          <li>Custom Model Training</li>
+          <li>Dedicated Support</li>
+          <li>SLA Guarantee</li>
+          <li>On-Premise Deployment</li>
+          <li>Custom Integrations</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button class="close-btn" onclick="closeSettings()">&times;</button>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #b4b4b4;">Backend URL</label>
+        <input type="text" id="backendUrl" value="http://localhost:8000" style="width: 100%; background: #1f1f1f; border: 1px solid #3f3f3f; color: #ececec; padding: 10px; border-radius: 8px; font-size: 14px;">
+      </div>
+      <button onclick="saveSettings()" style="background: #10a37f; border: none; color: white; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; width: 100%;">Save Settings</button>
+    </div>
+  </div>
+<script>
+    let API_BASE = 'http://localhost:8000';
+    let currentChatId = null;
+    let chatHistoryList = [];
+
+    const messagesContainer = document.getElementById('messagesContainer');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const mainContent = document.getElementById('mainContent');
+    const chatHistory = document.getElementById('chatHistory');
+    const safetyPanel = document.getElementById('safetyPanel');
+
+    // Auto-resize textarea
+    userInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+    });
+
+    // Send on Enter
+    userInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    sendBtn.addEventListener('click', sendMessage);
+
+    function sendExample(text) {
+      userInput.value = text;
+      sendMessage();
+    }
+
+    function newChat() {
+      // Save current chat to history
+      if (currentChatId && messagesContainer.children.length > 0) {
+        saveChatToHistory();
+      }
+      
+      // Reset for new chat
+      currentChatId = null;
+      messagesContainer.innerHTML = `
+        <div class="welcome" id="welcomeScreen">
+          <h1>How can I help you today?</h1>
+          <div class="examples">
+            <div class="example-card" onclick="sendExample('Explain quantum computing in simple terms')">
+              <p>Explain quantum computing in simple terms</p>
+            </div>
+            <div class="example-card" onclick="sendExample('What is artificial intelligence?')">
+              <p>What is artificial intelligence?</p>
+            </div>
+            <div class="example-card" onclick="sendExample('How does machine learning work?')">
+              <p>How does machine learning work?</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function saveChatToHistory() {
+      const firstMessage = messagesContainer.querySelector('.message.user .message-content');
+      if (firstMessage) {
+        const title = firstMessage.textContent.substring(0, 40) + '...';
+        addChatToSidebar(currentChatId, title);
       }
     }
-  </script>
-</head>
-<body class="bg-black text-white overflow-hidden">
-  
-  <!-- Main Container -->
-  <div class="flex h-screen">
-    
-    <!-- Sidebar -->
-    <div id="sidebar" class="w-72 bg-gradient-to-b from-gray-900 to-black border-r border-gray-800 flex flex-col">
+
+    function addChatToSidebar(chatId, title) {
+      // Check if already exists
+      const existing = chatHistory.querySelector(`[data-chat-id="${chatId}"]`);
+      if (existing) return;
       
-      <!-- Logo -->
-      <div class="p-6 border-b border-gray-800">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-            <i class="fas fa-shield-halved text-white text-xl"></i>
-          </div>
-          <div>
-            <h1 class="text-xl font-bold gradient-text">SpecTrace</h1>
-            <p class="text-xs text-gray-400">AI Safety Monitor</p>
-          </div>
-        </div>
-      </div>
+      const historyItem = document.createElement('div');
+      historyItem.className = 'history-item';
+      historyItem.setAttribute('data-chat-id', chatId);
+      historyItem.textContent = title;
+      historyItem.onclick = () => loadChat(chatId);
+      chatHistory.insertBefore(historyItem, chatHistory.firstChild);
+    }
+
+    function loadChat(chatId) {
+      // Future: Load chat from backend
+      console.log('Load chat:', chatId);
+    }
+
+    function toggleSafety() {
+      safetyPanel.classList.toggle('active');
+    }
+
+    function openPlans() {
+      document.getElementById('plansModal').classList.add('active');
+    }
+
+    function closePlans() {
+      document.getElementById('plansModal').classList.remove('active');
+    }
+
+    function openSettings() {
+      document.getElementById('settingsModal').classList.add('active');
+    }
+
+    function closeSettings() {
+      document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    function saveSettings() {
+      API_BASE = document.getElementById('backendUrl').value;
+      closeSettings();
+      alert('Settings saved!');
+    }
+
+    function updateSafetyMetrics(safety) {
+      if (!safety) return;
       
-      <!-- New Chat Button -->
-      <div class="p-4">
-        <button onclick="newChat()" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all duration-300 flex items-center justify-center gap-2 font-semibold shadow-lg shadow-purple-500/50">
-          <i class="fas fa-plus"></i>
-          <span>New Chat</span>
-        </button>
-      </div>
-      
-      <!-- Chat History -->
-      <div class="flex-1 overflow-y-auto px-4 space-y-2" id="chatHistory">
-        <!-- Populated by JS -->
-      </div>
-      
-      <!-- User Profile -->
-      <div class="p-4 border-t border-gray-800">
-        <div class="flex items-center gap-3 p-3 rounded-xl glass hover:bg-white/10 transition-all cursor-pointer">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-            <i class="fas fa-user text-white"></i>
-          </div>
-          <div class="flex-1">
-            <p class="text-sm font-semibold">User</p>
-            <p class="text-xs text-gray-400">Free Plan</p>
-          </div>
-          <i class="fas fa-ellipsis-v text-gray-400"></i>
-        </div>
-      </div>
-      
-    </div>
-    
-    <!-- Main Content -->
-    <div class="flex-1 flex flex-col relative">
-      
-      <!-- Header -->
-      <div class="h-16 border-b border-gray-800 flex items-center justify-between px-6 glass">
+      const risk = Math.round(safety.overall_risk_score * 100);
+      const deception = Math.round(safety.deception_probability * 100);
+      const toxicity = Math.round(safety.toxicity_score * 100);
+      const drift = Math.round(safety.behavioral_drift * 100);
+      const compliance = safety.compliance_status === 'safe' ? 100 : safety.compliance_status === 'caution' ? 70 : 30;
+
+      document.getElementById('riskScore').textContent = risk + '%';
+      document.getElementById('deceptionScore').textContent = deception + '%';
+      document.getElementById('toxicityScore').textContent = toxicity + '%';
+      document.getElementById('driftScore').textContent = drift + '%';
+      document.getElementById('complianceScore').textContent = compliance + '%';
+
+      updateBar('riskBar', risk);
+      updateBar('deceptionBar', deception);
+      updateBar('toxicityBar', toxicity);
+      updateBar('driftBar', drift);
+      updateBar('complianceBar', compliance);
+    }
+
+    function updateBar(barId, value) {
+      const bar = document.getElementById(barId);
+      bar.style.width = value + '%';
+      bar.className = 'metric-fill';
+      if (value > 70) bar.classList.add('danger');
+      else if (value > 40) bar.classList.add('warning');
+    }
+
+    async function sendMessage() {
+      const message = userInput.value.trim();
+      if (!message) return;
+
+      const welcomeScreen = document.getElementById('welcomeScreen');
+      if (welcomeScreen) welcomeScreen.remove();
+
+      addMessage('user', message);
+      userInput.value = '';
+      userInput.style.height = 'auto';
+
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = '<div style="width: 20px; height: 20px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite;"></div>';
+
+      const loadingId = addMessage('assistant', '', true);
+
+      try {
+        const selectedModel = document.getElementById('modelSelectInput').value;
         
-        <!-- Model Selector -->
-        <div class="flex items-center gap-3">
-          <select id="modelSelect" onchange="updateModel()" class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer">
-            <optgroup label="🆓 Free Models (No API Key Needed!)">
-              <option value="llama-3.1-70b-versatile">🦙 Llama 3.1 70B (Groq)</option>
-              <option value="llama-3.1-8b-instant">🦙 Llama 3.1 8B (Groq)</option>
-              <option value="mixtral-8x7b-32768">🌀 Mixtral 8x7B (Groq)</option>
-              <option value="gemini-1.5-flash">💎 Gemini 1.5 Flash (Google)</option>
-              <option value="gemini-1.5-pro">💎 Gemini 1.5 Pro (Google)</option>
-              <option value="command-r">🔮 Command R (Cohere)</option>
-              <option value="command-r-plus">🔮 Command R+ (Cohere)</option>
-            </optgroup>
-            <optgroup label="💰 Premium Models">
-              <option value="gpt-4o">🤖 GPT-4o (OpenAI)</option>
-              <option value="gpt-4-turbo">🤖 GPT-4 Turbo (OpenAI)</option>
-              <option value="claude-3-5-sonnet-20241022">🧠 Claude 3.5 Sonnet (Anthropic)</option>
-            </optgroup>
-          </select>
+        const response = await fetch(`${API_BASE}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: message,
+            model: selectedModel,
+            chat_id: currentChatId
+          })
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+
+        if (data.error) {
+          updateMessage(loadingId, `Error: ${data.error}`, false, true);
+        } else {
+          currentChatId = data.chat_id;
           
-          <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/30">
-            <div class="w-2 h-2 rounded-full bg-green-500 pulse"></div>
-            <span class="text-xs text-green-400 font-medium">Online</span>
-          </div>
-        </div>
-        
-        <!-- Actions -->
-        <div class="flex items-center gap-3">
-          <button onclick="toggleSafety()" class="w-10 h-10 rounded-lg glass hover:bg-white/10 transition-all flex items-center justify-center" title="Safety Panel">
-            <i class="fas fa-shield-halved text-purple-400"></i>
-          </button>
-          <button class="w-10 h-10 rounded-lg glass hover:bg-white/10 transition-all flex items-center justify-center" title="Settings">
-            <i class="fas fa-cog text-gray-400"></i>
-          </button>
-        </div>
-        
-      </div>
+          // Stream the response with typing effect
+          await streamText(loadingId, data.response);
+          
+          if (data.safety) updateSafetyMetrics(data.safety);
+          
+          // Save to history after first message
+          if (messagesContainer.querySelectorAll('.message').length === 2) {
+            saveChatToHistory();
+          }
+        }
+
+      } catch (error) {
+        updateMessage(loadingId, 
+          `❌ Connection Error\n\nCannot reach backend at ${API_BASE}\n\nTroubleshooting:\n1. Check backend is running\n2. Check .env file has API keys\n3. Restart backend server`, 
+          false, true
+        );
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>';
+      }
+    }
+
+    async function streamText(messageId, text) {
+      const messageDiv = document.getElementById(messageId);
+      if (!messageDiv) return;
       
-      <!-- Chat Container -->
-      <div id="chatContainer" class="flex-1 overflow-y-auto">
-        
-        <!-- Welcome Screen -->
-        <div id="welcome" class="h-full flex items-center justify-center p-8">
-          <div class="max-w-4xl w-full text-center space-y-8">
-            
-            <!-- Hero -->
-            <div class="space-y-4">
-              <div class="inline-block">
-                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4 mx-auto shadow-2xl shadow-purple-500/50">
-                  <i class="fas fa-shield-halved text-white text-4xl"></i>
-                </div>
-              </div>
-              <h1 class="text-5xl font-bold gradient-text">Welcome to SpecTrace</h1>
-              <p class="text-xl text-gray-400">AI Safety Monitor with Real-Time Risk Analysis</p>
-            </div>
-            
-            <!-- Features -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12">
-              
-              <div class="glass rounded-2xl p-6 hover:bg-white/10 transition-all cursor-pointer" onclick="setPrompt('What is artificial intelligence?')">
-                <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mb-4">
-                  <i class="fas fa-lightbulb text-blue-400 text-2xl"></i>
-                </div>
-                <h3 class="font-semibold mb-2">Examples</h3>
-                <p class="text-sm text-gray-400">What is artificial intelligence?</p>
-              </div>
-              
-              <div class="glass rounded-2xl p-6 hover:bg-white/10 transition-all cursor-pointer" onclick="setPrompt('Explain quantum computing in simple terms')">
-                <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
-                  <i class="fas fa-atom text-purple-400 text-2xl"></i>
-                </div>
-                <h3 class="font-semibold mb-2">Science</h3>
-                <p class="text-sm text-gray-400">Explain quantum computing</p>
-              </div>
-              
-              <div class="glass rounded-2xl p-6 hover:bg-white/10 transition-all cursor-pointer" onclick="setPrompt('What are the risks of AI?')">
-                <div class="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center mb-4">
-                  <i class="fas fa-exclamation-triangle text-red-400 text-2xl"></i>
-                </div>
-                <h3 class="font-semibold mb-2">Safety</h3>
-                <p class="text-sm text-gray-400">What are the risks of AI?</p>
-              </div>
-              
-            </div>
-            
-            <!-- Stats -->
-            <div class="grid grid-cols-3 gap-4 mt-8">
-              <div class="glass rounded-xl p-4">
-                <div class="text-3xl font-bold gradient-text">15+</div>
-                <div class="text-sm text-gray-400">AI Models</div>
-              </div>
-              <div class="glass rounded-xl p-4">
-                <div class="text-3xl font-bold gradient-text">100%</div>
-                <div class="text-sm text-gray-400">Free Tier</div>
-              </div>
-              <div class="glass rounded-xl p-4">
-                <div class="text-3xl font-bold gradient-text">Real-Time</div>
-                <div class="text-sm text-gray-400">Safety Analysis</div>
-              </div>
-            </div>
-            
-          </div>
-        </div>
-        
-      </div>
+      const contentDiv = messageDiv.querySelector('.message-content');
+      contentDiv.classList.remove('loading');
+      contentDiv.textContent = '';
       
-      <!-- Input Area -->
-      <div class="p-6 border-t border-gray-800 glass">
-        <div class="max-w-4xl mx-auto">
-          <div class="gradient-border rounded-2xl p-1">
-            <div class="bg-gray-900 rounded-xl flex items-end gap-3 p-4">
-              <textarea 
-                id="messageInput" 
-                placeholder="Ask anything... SpecTrace monitors safety in real-time"
-                rows="1"
-                class="flex-1 bg-transparent border-none outline-none resize-none text-white placeholder-gray-500"
-                onkeydown="handleKeyPress(event)"
-                oninput="autoResize(this)"
-              ></textarea>
-              <button 
-                id="sendBtn"
-                onclick="sendMessage()" 
-                class="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-all flex items-center justify-center shadow-lg shadow-purple-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <i class="fas fa-paper-plane text-white"></i>
-              </button>
-            </div>
-          </div>
-          <p class="text-xs text-gray-500 text-center mt-3">
-            <i class="fas fa-shield-halved text-purple-400"></i>
-            Protected by multi-engine safety analysis
-          </p>
-        </div>
-      </div>
-      
-    </div>
-    
-    <!-- Safety Panel -->
-    <div id="safetyPanel" class="w-96 bg-gradient-to-b from-gray-900 to-black border-l border-gray-800 transform translate-x-full transition-transform duration-300 overflow-y-auto">
-      
-      <div class="p-6 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-gray-900/95 backdrop-blur-sm z-10">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-            <i class="fas fa-shield-halved text-purple-400"></i>
-          </div>
-          <div>
-            <h3 class="font-semibold">Safety Analysis</h3>
-            <p class="text-xs text-gray-400">Real-time monitoring</p>
-          </div>
-        </div>
-        <button onclick="toggleSafety()" class="w-8 h-8 rounded-lg hover:bg-white/10 transition-all flex items-center justify-center">
-          <i class="fas fa-times text-gray-400"></i>
-        </button>
-      </div>
-      
-      <div id="safetyContent" class="p-6">
-        <div class="text-center py-12 text-gray-500">
-          <i class="fas fa-shield-halved text-4xl mb-4 opacity-50"></i>
-          <p>Send a message to see safety analysis</p>
-        </div>
-      </div>
-      
-    </div>
-    
-  </div>
-  
-  <script src="app.js"></script>
+      // Stream character by character
+      for (let i = 0; i < text.length; i++) {
+        contentDiv.textContent += text[i];
+        mainContent.scrollTop = mainContent.scrollHeight;
+        await new Promise(resolve => setTimeout(resolve, 10)); // 10ms delay per character
+      }
+    }
+
+    function addMessage(role, content, isLoading = false) {
+      const messageId = 'msg-' + Date.now();
+      const messageDiv = document.createElement('div');
+      messageDiv.id = messageId;
+      messageDiv.className = `message ${role}`;
+      const avatar = role === 'user' ? '👤' : '🤖';
+      messageDiv.innerHTML = `
+        <div class="avatar">${avatar}</div>
+        <div class="message-content ${isLoading ? 'loading' : ''}">${isLoading ? 'Thinking...' : content}</div>
+      `;
+      messagesContainer.appendChild(messageDiv);
+      mainContent.scrollTop = mainContent.scrollHeight;
+      return messageId;
+    }
+
+    function updateMessage(messageId, content, isLoading = false, isError = false) {
+      const messageDiv = document.getElementById(messageId);
+      if (!messageDiv) return;
+      const contentDiv = messageDiv.querySelector('.message-content');
+      contentDiv.classList.remove('loading');
+      if (isError) contentDiv.className = 'message-content error';
+      contentDiv.textContent = content;
+      mainContent.scrollTop = mainContent.scrollHeight;
+    }
+
+    window.addEventListener('load', async () => {
+      try {
+        const response = await fetch(`${API_BASE}/health`);
+        if (response.ok) console.log('✅ Backend is running!');
+      } catch (error) {
+        console.error('❌ Backend not running');
+      }
+    });
+  </script>
 </body>
 </html>

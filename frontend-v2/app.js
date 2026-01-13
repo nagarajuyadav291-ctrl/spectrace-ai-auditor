@@ -1,394 +1,25 @@
-// SpecTrace - Ultra-Modern AI Safety Monitor
-const API_URL = 'http://localhost:8000/api';
+let API_BASE = 'http://localhost:8000';
+let currentChatId = null;
+let messageHistory = [];
+let chatSessions = [];
 
-let currentModel = 'llama-3.1-70b-versatile';
-let isProcessing = false;
-let chatHistory = [];
+// DOM Elements
+const messagesContainer = document.getElementById('messagesContainer');
+const welcomeScreen = document.getElementById('welcomeScreen');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const modelSelect = document.getElementById('modelSelect');
+const mainContent = document.getElementById('mainContent');
+const chatHistory = document.getElementById('chatHistory');
+const safetyPanel = document.getElementById('safetyPanel');
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-  newChat();
-  loadChatHistory();
+// Auto-resize textarea
+userInput.addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = (this.scrollHeight) + 'px';
 });
 
-// New Chat
-function newChat() {
-  const container = document.getElementById('chatContainer');
-  container.innerHTML = `
-    <div id="welcome" class="h-full flex items-center justify-center p-8">
-      <div class="max-w-4xl w-full text-center space-y-8">
-        <div class="space-y-4">
-          <div class="inline-block">
-            <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4 mx-auto shadow-2xl shadow-purple-500/50">
-              <i class="fas fa-shield-halved text-white text-4xl"></i>
-            </div>
-          </div>
-          <h1 class="text-5xl font-bold gradient-text">Welcome to SpecTrace</h1>
-          <p class="text-xl text-gray-400">AI Safety Monitor with Real-Time Risk Analysis</p>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12">
-          <div class="glass rounded-2xl p-6 hover:bg-white/10 transition-all cursor-pointer" onclick="setPrompt('What is artificial intelligence?')">
-            <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mb-4">
-              <i class="fas fa-lightbulb text-blue-400 text-2xl"></i>
-            </div>
-            <h3 class="font-semibold mb-2">Examples</h3>
-            <p class="text-sm text-gray-400">What is artificial intelligence?</p>
-          </div>
-          
-          <div class="glass rounded-2xl p-6 hover:bg-white/10 transition-all cursor-pointer" onclick="setPrompt('Explain quantum computing in simple terms')">
-            <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4">
-              <i class="fas fa-atom text-purple-400 text-2xl"></i>
-            </div>
-            <h3 class="font-semibold mb-2">Science</h3>
-            <p class="text-sm text-gray-400">Explain quantum computing</p>
-          </div>
-          
-          <div class="glass rounded-2xl p-6 hover:bg-white/10 transition-all cursor-pointer" onclick="setPrompt('What are the risks of AI?')">
-            <div class="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center mb-4">
-              <i class="fas fa-exclamation-triangle text-red-400 text-2xl"></i>
-            </div>
-            <h3 class="font-semibold mb-2">Safety</h3>
-            <p class="text-sm text-gray-400">What are the risks of AI?</p>
-          </div>
-        </div>
-        
-        <div class="grid grid-cols-3 gap-4 mt-8">
-          <div class="glass rounded-xl p-4">
-            <div class="text-3xl font-bold gradient-text">15+</div>
-            <div class="text-sm text-gray-400">AI Models</div>
-          </div>
-          <div class="glass rounded-xl p-4">
-            <div class="text-3xl font-bold gradient-text">100%</div>
-            <div class="text-sm text-gray-400">Free Tier</div>
-          </div>
-          <div class="glass rounded-xl p-4">
-            <div class="text-3xl font-bold gradient-text">Real-Time</div>
-            <div class="text-sm text-gray-400">Safety Analysis</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-  chatHistory = [];
-  updateChatHistorySidebar();
-}
-
-// Set Prompt
-function setPrompt(text) {
-  document.getElementById('messageInput').value = text;
-  document.getElementById('messageInput').focus();
-}
-
-// Send Message
-async function sendMessage() {
-  if (isProcessing) return;
-  
-  const input = document.getElementById('messageInput');
-  const message = input.value.trim();
-  
-  if (!message) return;
-  
-  // Clear input
-  input.value = '';
-  input.style.height = 'auto';
-  
-  // Remove welcome
-  const welcome = document.getElementById('welcome');
-  if (welcome) {
-    document.getElementById('chatContainer').innerHTML = '<div class="p-6 space-y-6" id="messages"></div>';
-  }
-  
-  // Add user message
-  addMessage('user', message);
-  
-  // Add loading
-  const loadingId = addLoading();
-  
-  // Disable input
-  isProcessing = true;
-  document.getElementById('sendBtn').disabled = true;
-  
-  try {
-    const response = await fetch(`${API_URL}/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, model: currentModel })
-    });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'API Error');
-    }
-    
-    const data = await response.json();
-    
-    // Remove loading
-    removeMessage(loadingId);
-    
-    // Add response
-    addMessage('assistant', data.response, data.risk_analysis);
-    
-    // Update safety panel
-    updateSafety(data.risk_analysis);
-    
-    // Save to history
-    saveChatHistory(message, data.response);
-    
-  } catch (error) {
-    console.error('Error:', error);
-    removeMessage(loadingId);
-    
-    const errorMsg = `
-      <div class="space-y-3">
-        <div class="flex items-center gap-2 text-red-400">
-          <i class="fas fa-exclamation-circle"></i>
-          <span class="font-semibold">Error: ${error.message}</span>
-        </div>
-        <div class="text-sm text-gray-400 space-y-2">
-          <p><strong>Troubleshooting:</strong></p>
-          <ul class="list-disc list-inside space-y-1">
-            <li>Backend running? Check <code class="bg-gray-800 px-2 py-1 rounded">http://localhost:8000/docs</code></li>
-            <li>API keys in <code class="bg-gray-800 px-2 py-1 rounded">backend/.env</code>?</li>
-            <li>Database set to SQLite? <code class="bg-gray-800 px-2 py-1 rounded">DATABASE_URL=sqlite:///./spectrace.db</code></li>
-          </ul>
-        </div>
-      </div>
-    `;
-    addMessage('assistant', errorMsg, null);
-  } finally {
-    isProcessing = false;
-    document.getElementById('sendBtn').disabled = false;
-    input.focus();
-  }
-}
-
-// Add Message
-function addMessage(role, content, risk = null) {
-  const messagesContainer = document.getElementById('messages');
-  if (!messagesContainer) return;
-  
-  const messageDiv = document.createElement('div');
-  messageDiv.className = 'flex gap-4';
-  messageDiv.id = `msg-${Date.now()}`;
-  
-  const isUser = role === 'user';
-  
-  messageDiv.innerHTML = `
-    <div class="flex-shrink-0">
-      <div class="w-10 h-10 rounded-xl ${isUser ? 'bg-gradient-to-br from-blue-500 to-cyan-500' : 'bg-gradient-to-br from-purple-500 to-pink-500'} flex items-center justify-center shadow-lg">
-        <i class="fas ${isUser ? 'fa-user' : 'fa-robot'} text-white"></i>
-      </div>
-    </div>
-    
-    <div class="flex-1 space-y-3">
-      <div class="flex items-center gap-2">
-        <span class="font-semibold">${isUser ? 'You' : 'SpecTrace AI'}</span>
-        ${!isUser && risk ? `
-          <span class="px-2 py-1 rounded-full text-xs font-medium ${getRiskBadgeClass(risk.risk_score)}">
-            ${getRiskEmoji(risk.risk_score)} ${(risk.risk_score * 100).toFixed(0)}% Risk
-          </span>
-        ` : ''}
-      </div>
-      
-      <div class="prose prose-invert max-w-none">
-        ${content}
-      </div>
-      
-      ${!isUser && risk ? `
-        <div class="flex items-center gap-2">
-          <button onclick="copyText('${messageDiv.id}')" class="px-3 py-1.5 rounded-lg glass hover:bg-white/10 transition-all text-sm flex items-center gap-2">
-            <i class="fas fa-copy"></i>
-            <span>Copy</span>
-          </button>
-          <button onclick="regenerate()" class="px-3 py-1.5 rounded-lg glass hover:bg-white/10 transition-all text-sm flex items-center gap-2">
-            <i class="fas fa-redo"></i>
-            <span>Regenerate</span>
-          </button>
-          <button onclick="toggleSafety()" class="px-3 py-1.5 rounded-lg glass hover:bg-white/10 transition-all text-sm flex items-center gap-2">
-            <i class="fas fa-shield-halved text-purple-400"></i>
-            <span>Safety</span>
-          </button>
-        </div>
-      ` : ''}
-    </div>
-  `;
-  
-  messagesContainer.appendChild(messageDiv);
-  messagesContainer.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  
-  chatHistory.push({ role, content, risk });
-}
-
-// Add Loading
-function addLoading() {
-  const messagesContainer = document.getElementById('messages');
-  if (!messagesContainer) return;
-  
-  const loadingDiv = document.createElement('div');
-  loadingDiv.className = 'flex gap-4';
-  const loadingId = `loading-${Date.now()}`;
-  loadingDiv.id = loadingId;
-  
-  loadingDiv.innerHTML = `
-    <div class="flex-shrink-0">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-        <i class="fas fa-robot text-white"></i>
-      </div>
-    </div>
-    
-    <div class="flex-1">
-      <div class="font-semibold mb-2">SpecTrace AI</div>
-      <div class="flex items-center gap-1">
-        <div class="w-2 h-2 rounded-full bg-purple-400 typing-dot"></div>
-        <div class="w-2 h-2 rounded-full bg-purple-400 typing-dot"></div>
-        <div class="w-2 h-2 rounded-full bg-purple-400 typing-dot"></div>
-      </div>
-    </div>
-  `;
-  
-  messagesContainer.appendChild(loadingDiv);
-  messagesContainer.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  
-  return loadingId;
-}
-
-// Remove Message
-function removeMessage(id) {
-  const msg = document.getElementById(id);
-  if (msg) msg.remove();
-}
-
-// Get Risk Badge Class
-function getRiskBadgeClass(score) {
-  if (score < 0.3) return 'bg-green-500/20 text-green-400 border border-green-500/30';
-  if (score < 0.6) return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30';
-  return 'bg-red-500/20 text-red-400 border border-red-500/30';
-}
-
-// Get Risk Emoji
-function getRiskEmoji(score) {
-  if (score < 0.3) return '✅';
-  if (score < 0.6) return '⚡';
-  return '⚠️';
-}
-
-// Update Safety Panel
-function updateSafety(risk) {
-  const content = document.getElementById('safetyContent');
-  
-  content.innerHTML = `
-    <div class="space-y-6">
-      
-      <!-- Overall Score -->
-      <div class="glass rounded-2xl p-6">
-        <h4 class="text-sm font-semibold text-gray-400 mb-4">OVERALL RISK SCORE</h4>
-        <div class="text-5xl font-bold gradient-text mb-2">${(risk.risk_score * 100).toFixed(1)}%</div>
-        <div class="text-sm text-gray-400">Confidence: ${(risk.confidence * 100).toFixed(0)}%</div>
-      </div>
-      
-      <!-- Metrics -->
-      <div class="space-y-3">
-        <h4 class="text-sm font-semibold text-gray-400">KEY METRICS</h4>
-        
-        <div class="glass rounded-xl p-4">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm">Deception Probability</span>
-            <span class="font-semibold">${(risk.deception_probability * 100).toFixed(1)}%</span>
-          </div>
-          <div class="w-full bg-gray-800 rounded-full h-2">
-            <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full" style="width: ${risk.deception_probability * 100}%"></div>
-          </div>
-        </div>
-        
-        <div class="glass rounded-xl p-4">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm">Content Safety</span>
-            <span class="font-semibold">${(risk.breakdown.content_safety.score * 100).toFixed(0)}%</span>
-          </div>
-          <div class="w-full bg-gray-800 rounded-full h-2">
-            <div class="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full" style="width: ${risk.breakdown.content_safety.score * 100}%"></div>
-          </div>
-        </div>
-        
-        <div class="glass rounded-xl p-4">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm">Behavioral Patterns</span>
-            <span class="font-semibold">${(risk.breakdown.behavioral_patterns.score * 100).toFixed(0)}%</span>
-          </div>
-          <div class="w-full bg-gray-800 rounded-full h-2">
-            <div class="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full" style="width: ${risk.breakdown.behavioral_patterns.score * 100}%"></div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Explanation -->
-      <div class="space-y-3">
-        <h4 class="text-sm font-semibold text-gray-400">ANALYSIS</h4>
-        ${risk.explanation.map(exp => `
-          <div class="glass rounded-xl p-4 text-sm">
-            <i class="fas fa-check-circle text-green-400 mr-2"></i>
-            ${exp}
-          </div>
-        `).join('')}
-      </div>
-      
-      ${risk.violations.length > 0 ? `
-        <div class="space-y-3">
-          <h4 class="text-sm font-semibold text-red-400">⚠️ VIOLATIONS (${risk.violations.length})</h4>
-          ${risk.violations.map(v => `
-            <div class="glass rounded-xl p-4 border-l-4 ${v.severity === 'critical' ? 'border-red-500' : v.severity === 'high' ? 'border-yellow-500' : 'border-blue-500'}">
-              <div class="font-semibold text-sm mb-1">${v.severity.toUpperCase()}: ${v.rule_name}</div>
-              <div class="text-xs text-gray-400">${v.description}</div>
-            </div>
-          `).join('')}
-        </div>
-      ` : ''}
-      
-    </div>
-  `;
-  
-  // Auto-open if high risk
-  if (risk.risk_score >= 0.5) {
-    document.getElementById('safetyPanel').classList.remove('translate-x-full');
-  }
-}
-
-// Copy Text
-function copyText(msgId) {
-  const msg = document.getElementById(msgId);
-  const text = msg.querySelector('.prose').textContent;
-  navigator.clipboard.writeText(text);
-  
-  // Show feedback
-  const btn = event.target.closest('button');
-  const originalHTML = btn.innerHTML;
-  btn.innerHTML = '<i class="fas fa-check"></i><span>Copied!</span>';
-  setTimeout(() => btn.innerHTML = originalHTML, 2000);
-}
-
-// Regenerate
-function regenerate() {
-  if (chatHistory.length >= 2) {
-    const lastUser = chatHistory[chatHistory.length - 2];
-    if (lastUser.role === 'user') {
-      document.getElementById('messageInput').value = lastUser.content;
-      sendMessage();
-    }
-  }
-}
-
-// Toggle Safety
-function toggleSafety() {
-  document.getElementById('safetyPanel').classList.toggle('translate-x-full');
-}
-
-// Update Model
-function updateModel() {
-  currentModel = document.getElementById('modelSelect').value;
-}
-
-// Handle Key Press
+// Handle Enter key
 function handleKeyPress(event) {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
@@ -396,25 +27,237 @@ function handleKeyPress(event) {
   }
 }
 
-// Auto Resize
-function autoResize(textarea) {
-  textarea.style.height = 'auto';
-  textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+// Send example
+function sendExample(text) {
+  userInput.value = text;
+  sendMessage();
 }
 
-// Chat History
-function saveChatHistory(userMsg, aiMsg) {
-  const historyDiv = document.getElementById('chatHistory');
-  const chatItem = document.createElement('div');
-  chatItem.className = 'p-3 rounded-xl glass hover:bg-white/10 transition-all cursor-pointer text-sm';
-  chatItem.textContent = userMsg.substring(0, 30) + (userMsg.length > 30 ? '...' : '');
-  historyDiv.insertBefore(chatItem, historyDiv.firstChild);
+// New chat
+function newChat() {
+  currentChatId = null;
+  messageHistory = [];
+  messagesContainer.innerHTML = `
+    <div class="welcome" id="welcomeScreen">
+      <h1>How can I help you today?</h1>
+      <div class="examples">
+        <div class="example-card" onclick="sendExample('Explain quantum computing in simple terms')">
+          <p>Explain quantum computing in simple terms</p>
+        </div>
+        <div class="example-card" onclick="sendExample('What is artificial intelligence?')">
+          <p>What is artificial intelligence?</p>
+        </div>
+        <div class="example-card" onclick="sendExample('How does machine learning work?')">
+          <p>How does machine learning work?</p>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
-function loadChatHistory() {
-  // Load from localStorage if needed
+// Toggle safety panel
+function toggleSafety() {
+  safetyPanel.classList.toggle('active');
 }
 
-function updateChatHistorySidebar() {
-  // Update sidebar
+// Plans modal
+function openPlans() {
+  document.getElementById('plansModal').classList.add('active');
 }
+
+function closePlans() {
+  document.getElementById('plansModal').classList.remove('active');
+}
+
+// Settings
+function openSettings() {
+  document.getElementById('settingsModal').classList.add('active');
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('active');
+}
+
+function saveSettings() {
+  API_BASE = document.getElementById('backendUrl').value;
+  closeSettings();
+  alert('Settings saved!');
+}
+
+// Add to history
+function addToHistory(message) {
+  const historyItem = document.createElement('div');
+  historyItem.className = 'history-item';
+  historyItem.textContent = message.substring(0, 30) + (message.length > 30 ? '...' : '');
+  historyItem.onclick = () => {
+    // Load this chat (future feature)
+  };
+  chatHistory.insertBefore(historyItem, chatHistory.firstChild);
+}
+
+// Update safety metrics
+function updateSafetyMetrics(safety) {
+  if (!safety) return;
+
+  const risk = Math.round(safety.overall_risk_score * 100);
+  const deception = Math.round((safety.deception_probability || 0) * 100);
+  const toxicity = Math.round((safety.toxicity_score || 0) * 100);
+  const drift = Math.round((safety.behavioral_drift || 0) * 100);
+  const compliance = 100 - risk;
+
+  document.getElementById('riskScore').textContent = risk + '%';
+  document.getElementById('deceptionScore').textContent = deception + '%';
+  document.getElementById('toxicityScore').textContent = toxicity + '%';
+  document.getElementById('driftScore').textContent = drift + '%';
+  document.getElementById('complianceScore').textContent = compliance + '%';
+
+  updateBar('riskBar', risk);
+  updateBar('deceptionBar', deception);
+  updateBar('toxicityBar', toxicity);
+  updateBar('driftBar', drift);
+  updateBar('complianceBar', compliance);
+}
+
+function updateBar(barId, value) {
+  const bar = document.getElementById(barId);
+  bar.style.width = value + '%';
+  
+  bar.className = 'metric-fill';
+  if (value > 70) {
+    bar.classList.add('danger');
+  } else if (value > 40) {
+    bar.classList.add('warning');
+  }
+}
+
+// Send message
+async function sendMessage() {
+  const message = userInput.value.trim();
+  if (!message) return;
+
+  // Hide welcome screen
+  if (welcomeScreen) {
+    welcomeScreen.remove();
+  }
+
+  // Add to history
+  addToHistory(message);
+
+  // Add user message
+  addMessage('user', message);
+  messageHistory.push({ role: 'user', content: message });
+  
+  // Clear input
+  userInput.value = '';
+  userInput.style.height = 'auto';
+
+  // Disable send button
+  sendBtn.disabled = true;
+  sendBtn.textContent = 'Sending...';
+
+  // Add loading message
+  const loadingId = addMessage('assistant', 'Thinking...', true);
+
+  try {
+    console.log('Sending request to:', `${API_BASE}/chat`);
+    
+    const response = await fetch(`${API_BASE}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: message,
+        model: modelSelect.value,
+        chat_id: currentChatId
+      })
+    });
+
+    console.log('Response status:', response.status);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('Response data:', data);
+
+    if (data.error) {
+      updateMessage(loadingId, `Error: ${data.error}`, false, true);
+    } else {
+      currentChatId = data.chat_id;
+      updateMessage(loadingId, data.response, false, false);
+      messageHistory.push({ role: 'assistant', content: data.response });
+      
+      // Update safety metrics
+      if (data.safety) {
+        updateSafetyMetrics(data.safety);
+      }
+    }
+
+  } catch (error) {
+    console.error('Fetch error:', error);
+    updateMessage(loadingId, 
+      `❌ Connection Error\n\n` +
+      `Cannot reach backend at ${API_BASE}\n\n` +
+      `Troubleshooting:\n` +
+      `1. Check backend is running: http://localhost:8000/docs\n` +
+      `2. Check .env file has GROQ_API_KEY\n` +
+      `3. Restart backend server\n\n` +
+      `Error: ${error.message}`, 
+      false, true
+    );
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Send';
+  }
+}
+
+// Add message to UI
+function addMessage(role, content, isLoading = false) {
+  const messageId = 'msg-' + Date.now();
+  const messageDiv = document.createElement('div');
+  messageDiv.id = messageId;
+  messageDiv.className = `message ${role}`;
+
+  const avatar = role === 'user' ? '👤' : '🤖';
+  
+  messageDiv.innerHTML = `
+    <div class="avatar">${avatar}</div>
+    <div class="message-content ${isLoading ? 'loading' : ''}">${content}</div>
+  `;
+
+  messagesContainer.appendChild(messageDiv);
+  mainContent.scrollTop = mainContent.scrollHeight;
+
+  return messageId;
+}
+
+// Update message
+function updateMessage(messageId, content, isLoading = false, isError = false) {
+  const messageDiv = document.getElementById(messageId);
+  if (!messageDiv) return;
+
+  const contentDiv = messageDiv.querySelector('.message-content');
+  contentDiv.classList.remove('loading');
+  
+  if (isError) {
+    contentDiv.className = 'message-content error';
+  }
+  
+  contentDiv.textContent = content;
+  mainContent.scrollTop = mainContent.scrollHeight;
+}
+
+// Check backend on load
+window.addEventListener('load', async () => {
+  try {
+    const response = await fetch(`${API_BASE}/docs`);
+    if (response.ok) {
+      console.log('✅ Backend is running!');
+    }
+  } catch (error) {
+    console.error('❌ Backend not running:', error);
+    alert('⚠️ Backend is not running!\n\nPlease start backend:\ncd backend\n.\\venv\\Scripts\\Activate.ps1\nuvicorn app.main:app --reload --port 8000');
+  }
+});
