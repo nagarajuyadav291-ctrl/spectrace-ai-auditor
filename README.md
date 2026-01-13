@@ -2,7 +2,7 @@
 
 **Ultra-modern AI chat interface with real-time safety monitoring**
 
-![SpecTrace](https://img.shields.io/badge/Status-Active-success)
+![Status](https://img.shields.io/badge/Status-Active-success)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 ![Python](https://img.shields.io/badge/Python-3.8+-blue)
 
@@ -18,59 +18,33 @@
 
 ---
 
-## 🚀 Quick Start (5 Minutes)
-
-### **Step 1: Clone & Setup**
+## 🚀 Quick Start
 
 ```powershell
-# Clone repository
+# 1. Clone
 git clone https://github.com/nagarajuyadav291-ctrl/spectrace-ai-auditor.git
 cd spectrace-ai-auditor
 
-# Run clean setup (removes old files, installs everything)
-.\clean-setup.ps1
-```
+# 2. Create backend/.env
+# Add: GROQ_API_KEY=your_key_here
 
-### **Step 2: Get FREE API Key**
-
-Get at least **Groq** (fastest, completely free):
-
-1. Go to: https://console.groq.com
-2. Sign up (Google/GitHub)
-3. Click "API Keys" → "Create API Key"
-4. Copy key: `gsk_xxxxxxxxxxxxx`
-
-**More free APIs**: See [FREE_API_KEYS.md](FREE_API_KEYS.md)
-
-### **Step 3: Add API Key**
-
-Edit `backend/.env`:
-
-```env
-DATABASE_URL=sqlite:///./spectrace.db
-GROQ_API_KEY=gsk_xxxxxxxxxxxxx
-```
-
-### **Step 4: Run**
-
-```powershell
-# Backend (Terminal 1)
+# 3. Setup backend
 cd backend
+python -m venv venv
 .\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+
+# 4. Run backend (Terminal 1)
 uvicorn app.main:app --reload --port 8000
 
-# Frontend (Terminal 2)
+# 5. Run frontend (Terminal 2)
 cd frontend-v2
 python -m http.server 3000
+
+# 6. Open: http://localhost:3000
 ```
 
-### **Step 5: Open Browser**
-
-```
-http://localhost:3000
-```
-
-**You should see purple gradients and a modern sidebar!** 🎉
+**See [QUICKSTART.md](QUICKSTART.md) for detailed steps**
 
 ---
 
@@ -82,17 +56,19 @@ spectrace-ai-auditor/
 │   ├── app/
 │   │   ├── main.py      # API endpoints
 │   │   ├── models.py    # Database models
-│   │   └── services/    # AI & safety services
+│   │   ├── agents/      # AI agent logic
+│   │   ├── analysis/    # Risk analysis
+│   │   └── realtime/    # Real-time monitoring
 │   ├── .env             # API keys (create this)
-│   └── venv/            # Python virtual environment
+│   └── requirements.txt # Python packages
 │
-├── frontend-v2/         # Modern UI (Tailwind CSS)
+├── frontend-v2/         # Modern UI
 │   ├── index.html       # Main UI
 │   └── app.js           # JavaScript logic
 │
-├── FREE_API_KEYS.md     # Guide to get free API keys
-├── clean-setup.ps1      # Automated setup script
-└── README.md            # This file
+├── README.md            # This file
+├── QUICKSTART.md        # Setup guide
+└── FREE_API_KEYS.md     # API key guide
 ```
 
 ---
@@ -121,18 +97,16 @@ spectrace-ai-auditor/
 
 ## 🔑 Supported AI Models
 
-### **Free Models (No Credit Card)**
+### **Free Models**
 - 🦙 Llama 3.1 70B (Groq) - Fastest
 - 🦙 Llama 3.1 8B (Groq) - Ultra-fast
 - 🌀 Mixtral 8x7B (Groq)
 - 💎 Gemini 1.5 Flash (Google)
 - 💎 Gemini 1.5 Pro (Google)
 - 🔮 Command R (Cohere)
-- 🔮 Command R+ (Cohere)
 
-### **Premium Models (Paid)**
+### **Premium Models**
 - 🤖 GPT-4o (OpenAI)
-- 🤖 GPT-4 Turbo (OpenAI)
 - 🧠 Claude 3.5 Sonnet (Anthropic)
 
 ---
@@ -148,44 +122,37 @@ spectrace-ai-auditor/
 
 ---
 
-## 🐛 Troubleshooting
+## 📖 Documentation
 
-### **"Module not found" error**
-```powershell
-cd backend
-.\venv\Scripts\Activate.ps1
-pip install fastapi uvicorn sqlalchemy python-dotenv google-generativeai cohere anthropic
-```
-
-### **"Database connection failed"**
-Make sure `.env` has:
-```env
-DATABASE_URL=sqlite:///./spectrace.db
-```
-
-### **"API key invalid"**
-- Check you copied the full key
-- Check no extra spaces
-- Get new key from provider
-
-### **Old UI showing**
-- Make sure you're on `http://localhost:3000` (NOT 8000)
-- Hard refresh: `Ctrl + Shift + R`
-- Clear cache: `Ctrl + Shift + Delete`
+- [QUICKSTART.md](QUICKSTART.md) - Quick setup guide
+- [FREE_API_KEYS.md](FREE_API_KEYS.md) - Get free API keys
+- [LICENSE](LICENSE) - MIT License
 
 ---
 
-## 📖 Documentation
+## 🐛 Troubleshooting
 
-- [FREE_API_KEYS.md](FREE_API_KEYS.md) - Complete guide to get 10+ free API keys
-- [LICENSE](LICENSE) - MIT License
+**Module not found?**
+```powershell
+cd backend
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+**Port in use?**
+```powershell
+Get-Process -Id (Get-NetTCPConnection -LocalPort 8000).OwningProcess | Stop-Process -Force
+```
+
+**Old UI showing?**
+- Use `http://localhost:3000` (NOT 8000)
+- Hard refresh: `Ctrl + Shift + R`
 
 ---
 
 ## 🤝 Contributing
 
 Contributions welcome! Please:
-
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
@@ -202,13 +169,6 @@ MIT License - see [LICENSE](LICENSE) file
 ## 🌟 Star This Repo!
 
 If you find SpecTrace useful, please star this repository! ⭐
-
----
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/nagarajuyadav291-ctrl/spectrace-ai-auditor/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/nagarajuyadav291-ctrl/spectrace-ai-auditor/discussions)
 
 ---
 
